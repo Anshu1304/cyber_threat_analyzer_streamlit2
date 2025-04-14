@@ -1,7 +1,7 @@
 import streamlit as st
 from gpt_helper2 import GPTHelper
 from database import ThreatDatabase
-from news_scraper import NewsScraper
+from NewsScraper import NewsScraper
 import datetime
 
 st.set_page_config(page_title="Cyber Threat Analyzer", layout="wide")
