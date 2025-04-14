@@ -14,35 +14,39 @@ option = st.sidebar.radio("Select an action:", ["🔍 Analyze Threat", "🏷️ 
 if option == "🔍 Analyze Threat":
     st.header("🔍 Threat Analysis")
     query = st.text_area("Enter threat description to analyze:")
+
     if st.button("Analyze"):
         with st.spinner("Analyzing threat data using AI..."):
-            result = gpt.analyze_threat(query)
-            st.subheader("📌 AI Response")
-            if result.get("status") == "success":
-                content = result["data"].get("content", "No detailed response returned.")
-                st.write(content)
-                db.save_threat(query, content)
+            analysis_result = gpt.analyze_threat(query)  # Analyze the threat
+            
+            if "error" in analysis_result:
+                st.error(analysis_result["error"])
             else:
-                st.error(result.get("error", "Unknown error occurred."))
+                st.subheader("📌 AI Analysis Response")
+                st.write(analysis_result)
+
+                # Call tag_threat_data to automatically tag the analyzed result
+                with st.spinner("Tagging analyzed data..."):
+                    tagging_result = gpt.tag_threat_data(analysis_result)  # Tag the result from analysis
+                
+                    if "error" in tagging_result:
+                        st.error(tagging_result["error"])
+                    else:
+                        st.subheader("🏷️ Tagged Result")
+                        st.json(tagging_result)
 
 elif option == "🏷️ Tag Threat Data":
     st.header("🏷️ Threat Tagger")
     data = st.text_area("Enter raw threat data to tag:")
+
     if st.button("Tag"):
         with st.spinner("Tagging data using AI..."):
-            result = gpt.tag_threat_data(data)
-            st.subheader("📌 Tagged Result")
-            if result.get("status") == "success":
-                st.json(result["data"])
-                db.save_threat(data, str(result["data"]))
+            tagging_result = gpt.tag_threat_data(data)
+            
+            if "error" in tagging_result:
+                st.error(tagging_result["error"])
             else:
-                st.error(result.get("error", "Tagging failed."))
+                st.subheader("🏷️ Tagged Result")
+                st.json(tagging_result)
 
 st.markdown("---")
-if st.checkbox("📂 Show Saved Threat History"):
-    records = db.get_all_threats()
-    for record in records:
-        st.markdown(f"**🕒 {record[3]}**")
-        st.markdown(f"🔎 **Query**: {record[1]}")
-        st.markdown(f"📌 **Response**: {record[2]}")
-        st.markdown("---")
